@@ -2,7 +2,7 @@
 
 一个**纯本地的 Android 学生公寓管理系统**：Java 8 + Room，双角色（学生 / 管理员）权限区分，覆盖请假审批、报修、进出打卡、寝室评分、缴费管理、公告推送、访客登记等宿舍日常事务。
 
-> 数据全部存在手机本地 SQLite / Room 中，无后端、无网络请求。
+> 数据主要存在手机本地 SQLite / Room 中；同时已接入配套的 Spring Boot 后端（Retrofit）。
 > 本仓库是**作品展示页**，包含可安装的 APK、界面截图与项目说明；源码不在此仓库（可在交流时提供）。
 
 📦 **直接下载体验**：[`学生公寓管理系统.apk`](学生公寓管理系统.apk)
@@ -69,7 +69,7 @@
 | 语言 | Java 8 |
 | 存储 | **Room 2.4.3**（9 张表，`AppDatabase` version 8，WAL 模式） |
 | UI | RecyclerView + ViewBinding + 自定义 Adapter/ViewHolder |
-| 第三方 | Glide（图片）、PictureSelector（相册选图） |
+| 第三方 | Glide（图片）、PictureSelector（相册选图）、**Retrofit 2.9 + OkHttp 4.12**（网络） |
 | 构建 | Gradle 8.9 · AGP 8.7.3 · JDK 17 |
 | SDK | compileSdk 32 / targetSdk 33 / **minSdk 21** |
 | 规模 | 71 个 Java 文件，约 7200 行；43 个布局 |
@@ -120,12 +120,33 @@ app/src/main/java/com/example/studentdormitory/
 
 ---
 
+## 与服务端打通
+
+客户端**已经能调用配套的 Spring Boot 后端**（Retrofit + OkHttp + Gson）。
+
+入口：「我的」→ **在线学生列表（后端接口）**
+
+网络开发真正的难点不是"发个请求"，而是**分清三层失败**：
+
+| 层 | 表现 | 典型原因 |
+|---|---|---|
+| 传输层 | `onFailure`（`ConnectException` / 超时） | 后端没启动、IP 不对、不同网段 |
+| HTTP 层 | `isSuccessful() == false` | 4xx / 5xx |
+| 业务层 | `body().getCode() != 0` | 后端主动返回的错误（参数 / 权限 / 数据库） |
+
+> 后端：Spring Boot 3 + MyBatis + MySQL，3 个 REST 接口（`GET /students`、`POST /repairs`、`GET /repairs?status=`）
+
+**测试**：3 个 JVM 单元测试（不需要模拟器），用真实后端返回的 JSON 验证 DTO 字段映射——
+Gson 按字段名反射，**写错一个字母就得到 null 且不报错**，守的是客户端与服务端的格式契约。
+
+---
+
 ## 已知边界
 
-- **纯本地单机**：数据全在手机本地。因此"学生上报 → 管理员处理"只在**同一台设备**上成立——这是单机架构的固有边界，不是缺陷
-- 无网络层（不含 HTTP / Retrofit）
+- **双数据源并存**：原有页面读 Room 本地库，新页面读 HTTP 接口，**两者尚未统一**。
+  真实项目应收敛到 Repository 层，明确本地 / 网络 / 缓存策略
 - 密码明文存储，未做加盐哈希
-- 尚无单元测试
+- 只有网络层的 JSON 映射测试（3 个用例），UI 与数据库层仍无自动化测试
 - **数据库操作全在主线程**：Room 默认禁止这么做，本项目用 `allowMainThreadQueries()` 放开了。这是有意的取舍（改成异步要重写每个页面的数据流），但仍是技术债
 - 升级用 `fallbackToDestructiveMigration()`：旧库升级时数据会清空，生产环境应写精确的 `Migration`
 
