@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>学生公寓管理系统 · 作品集</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    color: #222; font-size: 10.5pt; line-height: 1.65; margin: 0;
+  }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover h1 { font-size: 30pt; margin: 0 0 6mm 0; letter-spacing: 1px; }
+  .cover .sub { font-size: 13pt; color: #555; margin-bottom: 14mm; }
+  .cover .meta { font-size: 11pt; line-height: 2.1; border-left: 4px solid #3F51B5; padding-left: 6mm; }
+  .cover .meta b { color: #3F51B5; display: inline-block; width: 26mm; }
+
+  h2 {
+    font-size: 15pt; color: #3F51B5; margin: 0 0 4mm 0;
+    padding-bottom: 2mm; border-bottom: 2px solid #3F51B5;
+  }
+  h3 { font-size: 11.5pt; margin: 6mm 0 2mm 0; color: #222; }
+  p { margin: 2mm 0; }
+  ul { margin: 2mm 0; padding-left: 6mm; }
+  li { margin: 1.2mm 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9.5pt; }
+  th, td { border: 1px solid #d0d0d0; padding: 2mm 2.5mm; text-align: left; vertical-align: top; }
+  th { background: #EEF1FB; font-weight: 600; }
+  td.k { width: 34mm; font-weight: 600; background: #FAFAFA; }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 5mm; margin-top: 4mm; }
+  .shot { width: 55mm; }
+  .shot img { width: 100%; border: 1px solid #ddd; border-radius: 2mm; display: block; }
+  .shot .cap { font-size: 8.5pt; color: #555; text-align: center; margin-top: 1.5mm; line-height: 1.35; }
+
+  code { font-family: Consolas, monospace; background: #F2F2F2; padding: 0.5mm 1.5mm; border-radius: 1mm; font-size: 9pt; }
+  pre {
+    background: #F7F7F7; border-left: 3px solid #3F51B5; padding: 3mm 4mm;
+    font-family: Consolas, monospace; font-size: 8.5pt; line-height: 1.5;
+    overflow-wrap: anywhere; white-space: pre-wrap; margin: 2mm 0;
+  }
+  .note { background: #FFF8E1; border-left: 3px solid #FFB300; padding: 3mm 4mm; margin: 3mm 0; font-size: 9.5pt; }
+  .ok { color: #2E7D32; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ============ 封面 ============ -->
+<div class="page cover">
+  <div class="sub">Android 客户端 + Spring Boot 后端</div>
+  <h1>学生公寓管理系统</h1>
+  <div class="sub">双端完整实现 · 作品集</div>
+  <div class="meta">
+    <div><b>姓名</b>{{NAME}}</div>
+    <div><b>联系方式</b>{{CONTACT}}</div>
+    <div><b>项目类型</b>课程设计延伸 · 独立开发</div>
+    <div><b>客户端</b>Android（Java 8 + Room + Retrofit）</div>
+    <div><b>服务端</b>Spring Boot 3 + MyBatis + MySQL 8</div>
+    <div><b>截图</b>{{SHOT_COUNT}} 张</div>
+  </div>
+</div>
+
+<!-- ============ 项目概览 ============ -->
+<div class="page">
+  <h2>项目概览</h2>
+  <p>一个学生公寓管理系统，覆盖学生与管理员两种角色的日常事务：请假审批、报修、进出打卡、卫生评分、缴费、公告、访客登记。</p>
+  <p><b>项目的重点不是功能数量，而是两次重构 + 一次前后端联调。</b></p>
+
+  <h3>技术栈</h3>
+  <table>
+    <tr><td class="k">客户端</td><td>Java 8 · Room 2.4.3 · Retrofit 2.9 · OkHttp 4.12 · RecyclerView · ViewBinding</td></tr>
+    <tr><td class="k">服务端</td><td>Spring Boot 3.2 · MyBatis 3.0 · MySQL 8.0 · H2（演示用）</td></tr>
+    <tr><td class="k">构建</td><td>Gradle 8.9 · AGP 8.7.3 · JDK 17</td></tr>
+    <tr><td class="k">客户端规模</td><td>71 个 Java 文件，约 7200 行，43 个布局</td></tr>
+    <tr><td class="k">服务端规模</td><td>16 个 Java 文件，约 900 行，2 个 MyBatis Mapper XML</td></tr>
+  </table>
+
+  <h3>三个阶段的演进</h3>
+  <table>
+    <tr><th>阶段</th><th>做了什么</th><th>解决的痛点</th></tr>
+    <tr><td>一 · DAO 分层</td><td>把散落在各 Activity 里的手写 SQL 与 Cursor 解析收敛成 8 个 DAO</td><td>同一段映射代码在 5 个文件里各抄一遍</td></tr>
+    <tr><td>二 · 迁移 Room</td><td>8 个手写 DAO 换成 Room 注解</td><td>SQL 写错只能在运行时暴露 → 变成编译期报错</td></tr>
+    <tr><td>三 · 前后端联调</td><td>新增 Spring Boot 后端，客户端用 Retrofit 调用</td><td>只能单机使用 → 数据可集中存储</td></tr>
+  </table>
+</div>
+
+<!-- ============ 技术要点 ============ -->
+<div class="page">
+  <h2>关键技术点</h2>
+
+  <h3>1. 数据访问层收口</h3>
+  <p>改造前每个页面自己开库、自己拼 SQL、自己按列位置取数据：</p>
+  <pre>Cursor cursor = db.rawQuery(sql, args);
+while (cursor.moveToNext()) {
+    Integer id = cursor.getInt(0);        // 列位置硬编码，全项目 89 处
+    String account = cursor.getString(1);
+}</pre>
+  <p>改造后用 <code>getColumnIndexOrThrow("列名")</code>，建表字段顺序变化也不会静默串数据。</p>
+
+  <h3>2. 手写 DAO → Room</h3>
+  <table>
+    <tr><th></th><th>手写 DAO</th><th>Room</th></tr>
+    <tr><td>建表</td><td>手写 create table 字符串</td><td>由 @Entity 生成，SQL 与字段不可能对不上</td></tr>
+    <tr><td>写错代价</td><td>运行时才炸</td><td>编译期报错（把每条 SQL 拿到内存 SQLite 上真跑）</td></tr>
+    <tr><td>事务</td><td>beginTransaction 三件套</td><td>一个 @Transaction 注解</td></tr>
+    <tr><td>联表结果</td><td>往实体里塞“有时有值”的字段</td><td>@Embedded + 独立 POJO</td></tr>
+  </table>
+
+  <h3>3. 客户端与服务端打通</h3>
+  <p>客户端用 Retrofit 调用后端 REST 接口。网络开发真正的难点不是“发个请求”，而是<b>分清三层失败</b>：</p>
+  <table>
+    <tr><th>层</th><th>表现</th><th>典型原因</th><th>给用户的提示</th></tr>
+    <tr><td>传输层</td><td>onFailure（ConnectException / 超时）</td><td>后端没启动、IP 不对、不同网段</td><td>连不上服务器</td></tr>
+    <tr><td>HTTP 层</td><td>isSuccessful() == false</td><td>400 参数 / 404 路径 / 500 服务端 bug</td><td>按状态码区分</td></tr>
+    <tr><td>业务层</td><td>body().getCode() != 0</td><td>权限不足、状态冲突</td><td>直接显示后端 message</td></tr>
+  </table>
+
+  <h3>4. 统一响应与异常语义</h3>
+  <table>
+    <tr><th>HTTP</th><th>场景</th></tr>
+    <tr><td>400</td><td>参数校验失败 / 业务规则不满足</td></tr>
+    <tr><td>404</td><td>路径不存在 / 资源不存在</td></tr>
+    <tr><td>405</td><td>请求方法不支持</td></tr>
+    <tr><td>503</td><td>数据库连不上（不是 500）</td></tr>
+  </table>
+  <div class="note">
+    关键取舍：数据库不可用属于<b>服务端依赖失败</b>，语义上应返回 503 而非 500；
+    并且要把原因写进响应体，否则调用方只看到“服务器内部错误”，无从定位。
+  </div>
+</div>
+
+<!-- ============ 接口与验证 ============ -->
+<div class="page">
+  <h2>接口设计与验证</h2>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+    <tr><td>GET</td><td>/students?page=&amp;size=</td><td>学生列表（分页）</td></tr>
+    <tr><td>POST</td><td>/repairs</td><td>新增报修（参数校验 + 只允许学生提交）</td></tr>
+    <tr><td>GET</td><td>/repairs?status=</td><td>按状态筛选（支持中文与 0/1 两种写法）</td></tr>
+  </table>
+
+  <h3>分页响应（真实抓取）</h3>
+  <pre>{"code":0,"message":"ok","data":{"total":6,"page":1,"size":3,"pages":2,
+  "list":[{"id":7,"account":"stu006","name":"孙八","sex":"女",
+           "phone":"13800000006","room":"308"}]}}</pre>
+
+  <h3>新增报修响应（含后端联表结果）</h3>
+  <pre>{"code":0,"message":"ok","data":{"id":4,"userId":2,"thing":"台灯",
+  "cause":"不亮了","status":0,"statusText":"未修",
+  "orderDate":"2026-11-02 19:25:22","date":"",
+  "studentName":"张三","studentRoom":"103"}}</pre>
+  <p class="ok">studentName / studentRoom 不属于 repairs 表，是后端 join user 算出来的 —— 客户端一次请求即可拿到，无需二次查询。</p>
+
+  <h3>异常响应</h3>
+  <pre>{"code":400,"message":"thing 不能为空"}
+{"code":400,"message":"status 只能是 未修/已修（或 0/1）"}
+{"code":404,"message":"接口不存在：nope"}
+{"code":405,"message":"不支持该请求方法：POST"}
+{"code":503,"message":"数据库连不上：请确认 MySQL 已启动（端口 3306）"}</pre>
+
+  <h3>自动化测试</h3>
+  <p>客户端 3 个 JVM 单元测试（无需模拟器）：用<b>真实后端返回的 JSON</b> 验证 DTO 字段映射。
+  Gson 按字段名反射填充，字段名写错一个字母就得到 null 且不报错 —— 这条测试守的是“客户端 DTO 与后端格式”的契约。</p>
+  <pre>NetMappingTest
+  OK studentsResponse_mapsEveryField
+  OK repairResponse_includesJoinedUserFields
+  OK errorResponse_mapsCodeAndMessage
+
+BUILD SUCCESSFUL - 3 tests, 0 failures</pre>
+</div>
+
+<!-- ============ 截图页 ============ -->
+{{SHOT_PAGES}}
+
+<!-- ============ 已知边界 ============ -->
+<div class="page">
+  <h2>已知边界</h2>
+  <p>下面这些是主动说明的，不是隐瞒：</p>
+  <table>
+    <tr><td class="k">双数据源并存</td><td>原有页面读 Room 本地库，新页面读 HTTP 接口，两者尚未统一。真实项目应收敛到 Repository 层，明确本地 / 网络 / 缓存策略</td></tr>
+    <tr><td class="k">密码明文</td><td>未做加盐哈希，教学项目取舍</td></tr>
+    <tr><td class="k">测试覆盖有限</td><td>有 3 个网络层 JSON 映射测试；UI 与数据库层仍无自动化测试</td></tr>
+    <tr><td class="k">主线程查库</td><td>Room 默认禁止，本项目用 allowMainThreadQueries() 放开，属有意的技术债</td></tr>
+    <tr><td class="k">后端无鉴权</td><td>接口裸奔，没有登录 / token</td></tr>
+    <tr><td class="k">破坏性迁移</td><td>升级用 fallbackToDestructiveMigration()，旧库升级会清空数据</td></tr>
+  </table>
+
+  <h3>值得讲的两个真实缺陷修复</h3>
+  <p><b>① 一个查询静默返回空，完全不报错。</b>宿舍管理列表永远是空的，但同一条 SQL 在设备上手动执行却能查出数据。
+  根因是建表时列没有声明类型 —— SQLite 的亲和性由声明类型决定，没声明就是 NONE 亲和性、不做类型转换，
+  于是 <code>where userType = ?</code> 绑定文本 "0" 时，TEXT 和 INTEGER 匹配不上。
+  更反直觉的是：这个坑恰恰是“有人为了安全改用占位符”那一刻才爆发的。</p>
+  <p><b>② 数据库连不上只报“500 服务器内部错误”。</b>调用方完全看不出是 MySQL 没启动。
+  加了 DataAccessException → 503 的独立处理器，把原因直接写进响应体；
+  同时确认了一个容易误解的行为 —— MySQL 中途重启后，后端不用重启也能自动恢复（连接池会重建连接）。</p>
+</div>
+
+</body>
+</html>
