@@ -217,9 +217,35 @@ BUILD SUCCESSFUL - 3 tests, 0 failures</pre>
     凡是"谁的数据算数""这个状态能不能变""时间取哪个"这类问题，答案一律在服务端。
   </div>
 
+  <h3>落地：读和写用的是不同策略</h3>
+  <table>
+    <tr><th>操作</th><th>策略</th><th>为什么这么选</th></tr>
+    <tr>
+      <td>读 · 学生列表</td>
+      <td>网络优先 → 成功则<b>整体覆盖</b>本地缓存 → 失败才回退缓存</td>
+      <td>离线也能看一眼，但界面会明确标注「数据来源：本地缓存，可能过期」</td>
+    </tr>
+    <tr>
+      <td>写 · 提交报修</td>
+      <td><b>只走服务端，不做缓存回退</b></td>
+      <td>提交失败必须让用户知道失败——不能用本地"假装成功"</td>
+    </tr>
+  </table>
+  <p>这个不对称是刻意的：<b>读可以降级，写不能降级。</b>让写操作"看起来成功"是最危险的一类 bug。</p>
+
+  <h3>数据库升级：第一个真正的 Migration</h3>
+  <p>新增缓存表需要把库从 v8 升到 v9。之前 v7→v8 只能用 <code>fallbackToDestructiveMigration()</code>
+  （旧库是 SQLiteOpenHelper 手写的，没有 Room 的身份校验表，没法忠实迁移）；
+  v8 之后库已是 Room 建的，所以这次写了<b>精确迁移</b>：只加一张表，不动老数据。</p>
+  <pre>static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+    public void migrate(SupportSQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `cached_student` (...)");   // 不动其它表
+    }
+};</pre>
+
   <h3>当前进度（诚实说明）</h3>
-  <p>新增的联调页已按此策略实现（读服务端、以返回为准）；存量 20+ 页面仍是纯本地读取，
-  尚未收敛到统一的 Repository 层。这是<b>分步推进</b>，不是遗漏——先打通链路，再逐页替换。</p>
+  <p>新增的联调页已按上述策略完整实现（网络优先 + 缓存回退 + 界面标注来源）。
+  存量 20+ 页面仍是纯本地读取，尚未收敛到 Repository——这是<b>分步推进</b>，不是遗漏。</p>
 </div>
 
 <!-- ============ 截图页 ============ -->
