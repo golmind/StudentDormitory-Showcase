@@ -174,6 +174,54 @@ while (cursor.moveToNext()) {
 BUILD SUCCESSFUL - 3 tests, 0 failures</pre>
 </div>
 
+<!-- ============ 数据源与安全 ============ -->
+<div class="page">
+  <h2>数据源与安全策略</h2>
+
+  <p><b>原则：服务端是唯一权威数据源。</b>客户端可以有本地数据，但它只是"暂存"，不参与裁决。</p>
+
+  <table>
+    <tr><th>角色</th><th>职责</th></tr>
+    <tr><td class="k">服务端 · MySQL</td><td><b>唯一权威</b>。写入、状态流转、时间戳全部由它决定</td></tr>
+    <tr><td class="k">客户端 · Room</td><td>仅作<b>本地暂存 / 离线展示</b>；联网后以服务端返回为准，<b>不做本地优先</b></td></tr>
+    <tr><td class="k">冲突处理</td><td>以服务端最新数据覆盖本地，客户端不参与判断谁对</td></tr>
+  </table>
+
+  <h3>为什么"服务端权威"顺带解决了安全问题</h3>
+  <table>
+    <tr><th>风险</th><th>做法</th><th>证据</th></tr>
+    <tr>
+      <td>SQL 注入</td>
+      <td>全部 SQL 走 <code>#{}</code> 预编译占位符，<b>全项目 0 处 <code>${}</code> 字符串拼接</b></td>
+      <td>mapper/*.xml</td>
+    </tr>
+    <tr>
+      <td>客户端伪造字段</td>
+      <td><code>status</code> / <code>date</code> / <code>orderDate</code> 由服务端赋值，客户端传了也无效</td>
+      <td>RepairsService.create</td>
+    </tr>
+    <tr>
+      <td>越权提交</td>
+      <td>服务端校验 <code>userType == 学生</code> 才允许提交报修（管理员 id 会被拒）</td>
+      <td>RepairsService.create</td>
+    </tr>
+    <tr>
+      <td>本地库被篡改</td>
+      <td>本地只是缓存，改它不影响权威数据；下次同步即被服务端覆盖</td>
+      <td>设计原则</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    一句话：<b>客户端不可信，所以它只负责"显示"，不负责"决定"。</b><br>
+    凡是"谁的数据算数""这个状态能不能变""时间取哪个"这类问题，答案一律在服务端。
+  </div>
+
+  <h3>当前进度（诚实说明）</h3>
+  <p>新增的联调页已按此策略实现（读服务端、以返回为准）；存量 20+ 页面仍是纯本地读取，
+  尚未收敛到统一的 Repository 层。这是<b>分步推进</b>，不是遗漏——先打通链路，再逐页替换。</p>
+</div>
+
 <!-- ============ 截图页 ============ -->
 {{SHOT_PAGES}}
 
@@ -182,7 +230,7 @@ BUILD SUCCESSFUL - 3 tests, 0 failures</pre>
   <h2>已知边界</h2>
   <p>下面这些是主动说明的，不是隐瞒：</p>
   <table>
-    <tr><td class="k">双数据源并存</td><td>原有页面读 Room 本地库，新页面读 HTTP 接口，两者尚未统一。真实项目应收敛到 Repository 层，明确本地 / 网络 / 缓存策略</td></tr>
+    <tr><td class="k">存量页面未收敛</td><td>存量 20+ 页面仍直读 Room；统一到 Repository 层（服务端权威 + 本地缓存）是下一步，新增联调页已按该策略实现</td></tr>
     <tr><td class="k">密码明文</td><td>未做加盐哈希，教学项目取舍</td></tr>
     <tr><td class="k">测试覆盖有限</td><td>有 3 个网络层 JSON 映射测试；UI 与数据库层仍无自动化测试</td></tr>
     <tr><td class="k">主线程查库</td><td>Room 默认禁止，本项目用 allowMainThreadQueries() 放开，属有意的技术债</td></tr>
