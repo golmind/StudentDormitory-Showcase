@@ -1,0 +1,104 @@
+学生公寓管理系统 · 后端服务  启动说明
+========================================
+
+【这是什么】
+----------------------------------------
+把 Android 端 SQLite 里的 9 张表搬到服务端，
+用 Spring Boot 3 + MyBatis 暴露 3 个 REST 接口。
+
+  GET  /students?page=1&size=10    学生列表（分页）
+  POST /repairs                    新增一条报修
+  GET  /repairs?status=待处理       按状态筛选报修
+
+
+【最快跑起来（不用装 MySQL）】
+----------------------------------------
+需要：JDK 17
+
+  cd 解压目录
+  java -jar dormitory-server-1.0.0.jar
+
+默认使用 H2 内存数据库，启动时自动建表并灌入初始数据。
+启动完成后访问 http://localhost:8080
+
+H2 控制台（可以直接看表）：http://localhost:8080/h2-console
+   JDBC URL: jdbc:h2:mem:dormitory
+   User: sa      Password: 留空
+
+
+【换成真实 MySQL】
+----------------------------------------
+本机已经装好一份**免安装版 MySQL 8.0.28**，位置：
+   C:\AndroidProjects\mysql-8.0.28-winx64
+
+它不用安装、不写注册表、不注册系统服务，目录里就是全部：
+   启动MySQL.bat    ← 双击启动（那个窗口就是服务，关掉就等于停止）
+   连接MySQL.bat    ← 双击打开命令行客户端
+   my.ini           ← 配置（端口 3306、utf8mb4）
+   data\            ← 数据文件（已初始化，root 是空密码）
+
+数据库 dormitory 和 9 张表**已经建好并导入过数据**了。
+
+步骤：
+1. 双击 启动MySQL.bat
+2. 用 mysql profile 启动后端
+     java -jar dormitory-server-1.0.0.jar --spring.profiles.active=mysql
+
+如果哪天要把库重建一遍：
+     mysql -u root -h 127.0.0.1 -e "create database dormitory default charset utf8mb4"
+     mysql -u root -h 127.0.0.1 --default-character-set=utf8mb4 dormitory < src/main/resources/db/mysql-schema.sql
+
+⚠️ 导入 SQL 时一定要带 --default-character-set=utf8mb4，
+   否则中文会变成乱码（这个坑在 H2 模式下也踩过一次）。
+
+
+【从源码构建】
+----------------------------------------
+需要：JDK 17（Gradle 8.9 带不动 JDK 21+）
+
+  ./gradlew bootJar
+  java -jar build/libs/dormitory-server-1.0.0.jar
+
+产物：build/libs/dormitory-server-1.0.0.jar
+
+
+【三个接口怎么调】
+----------------------------------------
+1) 学生列表（分页）
+   curl "http://localhost:8080/students?page=1&size=3"
+
+2) 新增报修
+   curl -X POST http://localhost:8080/repairs ^
+        -H "Content-Type: application/json" ^
+        -d "{\"userId\":2,\"thing\":\"台灯\",\"cause\":\"不亮了\"}"
+
+3) 按状态筛选（中文/数字都支持）
+   curl "http://localhost:8080/repairs?status=待处理"
+   curl "http://localhost:8080/repairs?status=0"
+   curl "http://localhost:8080/repairs"          # 不传 = 全部
+
+
+【内置数据】
+----------------------------------------
+管理员：admin / 123
+学生  ：stu001 ~ stu006 / 123456
+报修  ：3 条（2 条未修、1 条已修）
+
+
+【已验证】
+----------------------------------------
+实际跑通并通过的用例：
+  分页、分页边界兜底、新增报修、按中文状态筛选、按数字状态筛选、
+  参数校验(400)、非法状态(400)、路径不存在(404)、方法不支持(405)
+
+响应样本见 test/ 目录。
+两个开发中实际踩到并修掉的坑写在 README.md 的「实测记录」里。
+
+
+【已知限制】
+----------------------------------------
+· 没有鉴权：接口全部裸奔，没有登录/JWT
+· 没有单元测试：只有手写 curl 验证
+· 密码明文存储：沿用 Android 端做法，未加盐哈希
+· 报修列表未分页
+· 只在 H2 上验证过，真实 MySQL 未实测
